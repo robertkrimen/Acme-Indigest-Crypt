@@ -21,20 +21,29 @@ sub _readline {
 
 sub _digest {
     my $phrase = shift;
-    return Acme::Indigest::Crypt->digest( $phrase, $ENV{ AIC_LIMIT } || 0 );
+    my $salt_string = shift;
+    my $rounds = shift;
+    defined or $_ = $ENV{ AIC_SALT_STRING } for $salt_string;
+    defined or $_ = $ENV{ AIC_ROUNDS } for $rounds;
+    return Acme::Indigest::Crypt->digest( $phrase, $salt_string, $rounds );
 }
 
-if ( $ENV{ AIC_EMIT } ) {
-    my $phrase = _readline( 'Passphrase: ' );
-    print _digest $phrase;
+if ( -t STDIN ) {
+    if ( $ENV{ AIC_EMIT } ) {
+        my $phrase = _readline( 'Passphrase: ' );
+        print _digest $phrase;
+    }
+    else {
+        my $phrase = _readline( 'Passphrase: ' );
+        my $phrase_again = _readline( 'Passphrase (again): ' );
+        if ( $phrase ne $phrase_again ) {
+            die "Passphrase mismatch\n";
+        }
+        print _digest( $phrase ), "\n";
+    }
 }
 else {
-    my $phrase = _readline( 'Passphrase: ' );
-    my $phrase_again = _readline( 'Passphrase (again): ' );
-    if ( $phrase ne $phrase_again ) {
-        die "Passphrase mismatch\n";
-    }
-    print _digest $phrase;
+    print Acme::Indigest::Crypt->digest_multiple( join '', <STDIN> );
 }
 
 1;
