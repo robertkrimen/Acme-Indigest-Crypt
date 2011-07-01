@@ -21,3 +21,5 @@ _END_
     my $have = Acme::Indigest::Crypt->digest( $passphrase, $limit );
     is( $want, $have, "$passphrase => $limit" );
 }
+
+done_testing;
